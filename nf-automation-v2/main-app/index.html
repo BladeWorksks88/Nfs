@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp NF Automation - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        .pre-send-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .upload-zone {
+            border: 2px dashed var(--glass-border);
+            border-radius: 1rem;
+            padding: 3rem;
+            text-align: center;
+            background: rgba(255,255,255,0.02);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary);
+            background: rgba(79, 70, 229, 0.05);
+        }
+        .upload-zone-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        .extracted-data-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 2rem;
+        }
+        .extracted-form-group {
+            margin-bottom: 1.5rem;
+        }
+        .extracted-form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
+        }
+        .extracted-form-control {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i data-lucide="zap" class="logo-icon"></i>
+                <span>NF Auto</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-item active" data-view="dashboard">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-view="presend">
+                    <i data-lucide="send"></i> Pré-envio
+                </a>
+                <a href="#" class="nav-item" data-view="nfs">
+                    <i data-lucide="file-text"></i> Notas Fiscais
+                </a>
+                <a href="#" class="nav-item" data-view="responses">
+                    <i data-lucide="inbox"></i> Respostas (Form)
+                </a>
+                <a href="#" class="nav-item" data-view="settings">
+                    <i data-lucide="settings"></i> Configurações
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-search">
+                    <i data-lucide="search"></i>
+                    <input type="text" id="search-input" placeholder="Buscar NF...">
+                    <span id="last-update" style="font-size: 0.75rem; color: var(--text-dim); margin-left: 1rem; white-space: nowrap;">Última atualização: --:--</span>
+                </div>
+                <div class="header-actions">
+                    <button id="sync-btn" class="btn btn-secondary">
+                        <i data-lucide="refresh-cw"></i> Sincronizar Base
+                    </button>
+                    <input type="file" id="csv-input" accept=".csv" style="display: none;">
+                    <button id="send-bulk-btn" class="btn btn-primary">
+                        <i data-lucide="send"></i> Enviar Pendentes
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="view-section active">
+                <section class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-label">Total NFs</span>
+                            <h2 id="total-nfs">0</h2>
+                        </div>
+                        <i data-lucide="files" class="stat-icon purple"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-label">Pendentes</span>
+                            <h2 id="pending-nfs">0</h2>
+                        </div>
+                        <i data-lucide="clock" class="stat-icon orange"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <span class="stat-label">Enviadas Hoje</span>
+                            <h2 id="sent-nfs">0</h2>
+                        </div>
+                        <i data-lucide="check-circle" class="stat-icon green"></i>
+                    </div>
+                </section>
+
+                <section class="table-container glass">
+                    <div class="table-header">
+                        <h3>Notas Fiscais Recentes</h3>
+                        <div class="filters">
+                            <span class="filter-chip active">Todas</span>
+                            <span class="filter-chip">Roteirização</span>
+                            <span class="filter-chip">Previsão</span>
+                        </div>
+                    </div>
+                    <table class="nf-table">
+                        <thead>
+                            <tr>
+                                <th>NF Nº</th>
+                                <th>Cliente</th>
+                                <th>Status NF</th>
+                                <th>WhatsApp / Tel</th>
+                                <th>Data Agend.</th>
+                                <th>Script</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="nf-table-body">
+                            <!-- Rows will be injected by JS -->
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="table-container glass" style="margin-top: 1.5rem;">
+                    <div class="table-header">
+                        <h3>Log de Automação (Debug)</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('automation-log').innerHTML = ''">Limpar Log</button>
+                    </div>
+                    <div id="automation-log" style="font-family: monospace; font-size: 0.75rem; color: #94a3b8; max-height: 150px; overflow-y: auto; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 0.5rem;">
+                        Pronto para processar arquivos... (Arraste PDFs para a tela)
+                    </div>
+                </section>
+            </div>
+
+            <!-- Pré-envio View (NOVO) -->
+            <div id="view-presend" class="view-section">
+                <div class="view-header">
+                    <h2>Área de Pré-envio Rápido</h2>
+                    <p>Leia NFs avulsas e direcione o número de WhatsApp rapidamente</p>
+                </div>
+
+                <div class="pre-send-container">
+                    <div class="upload-zone" id="presend-upload-zone">
+                        <i data-lucide="upload-cloud" class="upload-zone-icon"></i>
+                        <h3>Arraste o PDF da NF aqui</h3>
+                        <p style="color: var(--text-dim); font-size: 0.85rem; margin-top: 0.5rem;">ou clique para selecionar</p>
+                        <input type="file" id="presend-file" accept="application/pdf" style="display: none;">
+                    </div>
+
+                    <div class="extracted-data-card" id="presend-data-card" style="opacity: 0.5; pointer-events: none;">
+                        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="file-check" style="color: var(--success)"></i> Dados Extraídos
+                        </h3>
+                        
+                        <div class="extracted-form-group">
+                            <label>Número da NF</label>
+                            <input type="text" id="presend-nf-num" class="extracted-form-control" placeholder="Aguardando PDF...">
+                        </div>
+                        
+                        <div class="extracted-form-group">
+                            <label>Telefone / WhatsApp (Direcione o número)</label>
+                            <input type="text" id="presend-phone" class="extracted-form-control" placeholder="Ex: (11) 99999-9999">
+                        </div>
+
+                        <div class="extracted-form-group">
+                            <label>Cliente (Opcional)</label>
+                            <input type="text" id="presend-client" class="extracted-form-control" placeholder="Nome do Cliente">
+                        </div>
+
+                        <div class="extracted-form-group">
+                            <label>Tipo de Mensagem</label>
+                            <select id="presend-type" class="extracted-form-control">
+                                <option value="roteirizacao">Roteirização</option>
+                                <option value="previsao">Previsão de Entrega</option>
+                            </select>
+                        </div>
+
+                        <button id="presend-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 1rem; display: flex; justify-content: center; gap: 0.5rem;">
+                            <i data-lucide="send"></i> Enviar Formulário
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-nfs" class="view-section">
+                <div class="glass-placeholder">
+                    <i data-lucide="file-text"></i>
+                    <h3>Gerenciamento Completo de NFs</h3>
+                    <p>Em breve: Busca avançada, filtros por data e exportação de relatórios.</p>
+                </div>
+            </div>
+
+            <div id="view-responses" class="view-section">
+                <div class="view-header" style="margin-bottom: 2rem;">
+                    <h2>Respostas do Formulário</h2>
+                    <p>Acompanhe as confirmações preenchidas pelos clientes</p>
+                </div>
+                <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+                    <label for="filter-date" style="color: var(--text-dim); font-size: 0.9rem;">Filtrar por Dia:</label>
+                    <input type="date" id="filter-date" class="extracted-form-control" style="width: auto; padding: 0.5rem;">
+                    <button id="refresh-responses-btn" class="btn btn-secondary btn-sm"><i data-lucide="refresh-cw"></i> Atualizar Respostas</button>
+                </div>
+                
+                <div id="responses-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;">
+                    <!-- Cards de resposta serão injetados aqui -->
+                </div>
+            </div>
+
+            <div id="view-settings" class="view-section">
+                <div class="view-header" style="margin-bottom: 2rem;">
+                    <h2>Configurações</h2>
+                    <p>Configure a integração com Google Sheets e envio de PDFs</p>
+                </div>
+                
+                <div class="settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    
+                    <div class="settings-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--glass-border);">
+                        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="link" style="color: var(--primary)"></i> Configurações do App
+                        </h3>
+                        <div class="form-group" style="margin-bottom: 1rem;">
+                            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;">Google Apps Script Webhook URL</label>
+                            <input type="text" id="config-webhook-url" class="extracted-form-control" placeholder="https://script.google.com/macros/s/.../exec">
+                            <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 0.5rem;">Usado para salvar os PDFs no Drive e ler/salvar as respostas do formulário.</p>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;">URL do Formulário (Form App)</label>
+                            <input type="text" id="config-form-url" class="extracted-form-control" placeholder="Ex: https://meusite.com/form.html">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;">Versão do WhatsApp</label>
+                            <select id="config-whatsapp-version" class="extracted-form-control">
+                                <option value="web">WhatsApp Web (Navegador)</option>
+                                <option value="desktop">WhatsApp Desktop (Aplicativo Windows)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button id="save-settings" class="btn btn-primary">
+                        <i data-lucide="save"></i> Salvar Configurações
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Visualização -->
+    <div id="preview-modal" class="modal" style="background: rgba(0,0,0,0.95); display: none;">
+        <div class="modal-content glass" style="max-width: 95%; height: 90vh; background: #1a1a1a; border: 1px solid #333; display: flex; flex-direction: column; padding: 0; overflow: hidden; width: 90%;">
+            <div class="modal-header" style="padding: 1.5rem 2rem; border-bottom: 1px solid #333; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="font-size: 1.5rem; font-weight: 600; color: white;">Visualização</h2>
+                <button class="close-modal" style="background: none; border: none; color: #666; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <div class="modal-body" style="flex: 1; display: flex; background: #222; position: relative;">
+                <div id="message-side-overlay" style="position: absolute; left: 20px; top: 20px; z-index: 100; max-width: 350px; background: rgba(0,0,0,0.85); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid #444;">
+                    <h4 style="color: var(--primary); margin-bottom: 0.5rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Script da Mensagem</h4>
+                    <pre id="message-preview-text" style="white-space: pre-wrap; font-size: 0.85rem; color: #ccc; max-height: 350px; overflow-y: auto; line-height: 1.5; font-family: inherit;"></pre>
+                    <button id="confirm-send" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; padding: 0.8rem; display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="send"></i> Enviar Agora
+                    </button>
+                    <div id="uploading-pdf-indicator" style="display: none; color: var(--accent-orange); font-size: 0.8rem; text-align: center; margin-top: 1rem;">
+                        <i data-lucide="loader" class="spin"></i> Gerando link do PDF no Drive...
+                    </div>
+                </div>
+
+                <iframe id="pdf-viewer" style="width: 100%; height: 100%; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script src="lib/message-logic.js"></script>
+    <script src="presend.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
