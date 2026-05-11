@@ -577,7 +577,7 @@ function sendWhatsApp(group, msg) {
         ? `whatsapp://send?phone=${cleanPhone}&text=${encodeURIComponent(msg.text)}`
         : `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msg.text)}`;
 
-    window.open(url, '_blank');
+    window.open(url, 'whatsapp_window');
     logMsg(`📤 WhatsApp aberto para <strong>${group.cliente}</strong> — ${cleanPhone}`);
     logToHistory(group, msg);
     group.status = 'enviada';

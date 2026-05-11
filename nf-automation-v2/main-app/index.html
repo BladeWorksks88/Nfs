@@ -268,11 +268,34 @@
                             <input type="text" id="config-form-url" class="extracted-form-control" placeholder="Ex: https://meusite.com/form.html">
                         </div>
                         <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;">URL da Planilha Base de Dados (Google Sheets)</label>
+                            <input type="text" id="config-sheet-url" class="extracted-form-control" placeholder="Link de compartilhamento (exportação CSV) da sua base de NFs">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
                             <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;">Versão do WhatsApp</label>
                             <select id="config-whatsapp-version" class="extracted-form-control">
                                 <option value="web">WhatsApp Web (Navegador)</option>
                                 <option value="desktop">WhatsApp Desktop (Aplicativo Windows)</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-card" style="background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--glass-border);">
+                        <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="zap" style="color: var(--accent-orange)"></i> Integração API Oficial (Nível Mercado Livre)
+                        </h3>
+                        <p style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 1rem;">Opcional: Preencha para enviar mensagens e anexos de forma 100% invisível e automática via API do Meta.</p>
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;">Token de Acesso (Meta)</label>
+                            <input type="text" id="config-token" class="extracted-form-control" placeholder="EAAL...">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 1.5rem;">
+                            <label style="display: block; font-size: 0.75rem; color: var(--text-dim); margin-bottom: 0.5rem;">ID do Telefone (Phone ID)</label>
+                            <input type="text" id="config-phone-id" class="extracted-form-control" placeholder="123456789012345">
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1rem;">
+                            <input type="checkbox" id="config-auto-scan" style="width: 18px; height: 18px; accent-color: var(--primary);">
+                            <label for="config-auto-scan" style="font-size: 0.8rem; color: var(--text-dim); cursor: pointer;">Varredura automática de PDFs (a cada 5 min)</label>
                         </div>
                     </div>
                 </div>

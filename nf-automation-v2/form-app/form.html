@@ -411,7 +411,7 @@
 
                     <button type="submit" class="btn-submit" id="submit-btn">
                         <span>Confirmar Dados</span>
-                        <i data-lucide="arrow-right"></i>
+                        <i data-lucide="arrow-right" class="submit-icon"></i>
                         <div class="loader" id="submit-loader"></div>
                     </button>
                 </form>
@@ -479,10 +479,10 @@
                 const btn = document.getElementById('submit-btn');
                 const loader = document.getElementById('submit-loader');
                 const btnText = btn.querySelector('span');
-                const btnIcon = btn.querySelector('i');
+                const btnIcon = btn.querySelector('.submit-icon') || btn.querySelector('svg');
 
                 btnText.textContent = 'Enviando...';
-                btnIcon.style.display = 'none';
+                if (btnIcon) btnIcon.style.display = 'none';
                 loader.style.display = 'block';
                 btn.disabled = true;
 
@@ -525,7 +525,7 @@
                     errorMsg.innerHTML = '<b>Erro de Conexão:</b> ' + err.message + '<br><br>Verifique se você colocou a URL correta do Google Apps Script no código do form.html, e se ela está configurada para acesso por "Qualquer pessoa".';
 
                     btnText.textContent = 'Confirmar Dados';
-                    btnIcon.style.display = 'block';
+                    if (btnIcon) btnIcon.style.display = 'block';
                     loader.style.display = 'none';
                     btn.disabled = false;
                 }
